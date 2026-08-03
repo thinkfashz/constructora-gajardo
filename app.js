@@ -47,6 +47,8 @@ const state = {
   queue: [],
   activeLoads: 0,
   failed: new Set(),
+  retryTimers: new Map(),
+  retryAttempts: new Map(),
   initialReady: new Set(),
   initialSettled: new Set(),
   decodedCount: 0,
@@ -309,6 +311,29 @@ function evictDistantFrames() {
   }
 }
 
+function scheduleFailedRetry(index) {
+  if (state.retryTimers.has(index)) return;
+
+  const attempt = (state.retryAttempts.get(index) || 0) + 1;
+  state.retryAttempts.set(index, attempt);
+  if (attempt > 5) return;
+
+  const delay = Math.min(30000, 2000 * (2 ** (attempt - 1)));
+  const timer = setTimeout(() => {
+    state.retryTimers.delete(index);
+    const priority = Math.abs(index - state.currentFrame) <= 3 ? 1000 : 520;
+    queueFrame(index, priority);
+  }, delay);
+  state.retryTimers.set(index, timer);
+}
+
+function clearFailedRetry(index) {
+  const timer = state.retryTimers.get(index);
+  if (timer) clearTimeout(timer);
+  state.retryTimers.delete(index);
+  state.retryAttempts.delete(index);
+}
+
 function loadFrame(index, retries = RETRIES, highPriority = false) {
   if (index < 0 || index >= FRAME_COUNT) return Promise.resolve(null);
 
@@ -328,12 +353,14 @@ function loadFrame(index, retries = RETRIES, highPriority = false) {
       image.onload = async () => {
         try {
           if (typeof image.decode === 'function') await image.decode();
-        } catch (_) {}
+        } catch (_) {
+        }
 
         const firstDecodedCopy = !state.frames[index];
         state.frames[index] = image;
         state.lastUsed[index] = performance.now();
         state.failed.delete(index);
+        clearFailedRetry(index);
         if (firstDecodedCopy) state.decodedCount++;
 
         if (index < INITIAL_FRAME_COUNT) {
@@ -358,6 +385,7 @@ function loadFrame(index, retries = RETRIES, highPriority = false) {
         }
 
         state.failed.add(index);
+        scheduleFailedRetry(index);
         if (index < INITIAL_FRAME_COUNT) {
           state.initialSettled.add(index);
           updateInitialProgress();
@@ -736,7 +764,8 @@ function scrollToTarget(target) {
     try {
       lenis.scrollTo(target, { duration: 1.6 });
       return;
-    } catch (_) {}
+    } catch (_) {
+    }
   }
 
   const element = typeof target === 'string' ? $(target) : target;
@@ -1157,7 +1186,8 @@ window.__frameState = () => ({
   initialSettled: state.initialSettled.size,
   cacheDone: state.cacheDone,
   cacheFailed: state.cacheFailed,
-  failed: Array.from(state.failed)
+  failed: Array.from(state.failed),
+  scheduledRetries: state.retryTimers.size
 });
 
 if (location.search.includes('test=1')) {
