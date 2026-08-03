@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = 'v3';
+const VERSION = 'v4';
 const SHELL_CACHE = `cg-shell-${VERSION}`;
 const FRAME_CACHE = `cg-frames-${VERSION}`;
 const CACHE_PREFIX = 'cg-';
@@ -41,7 +41,8 @@ function isFrameRequest(requestUrl) {
 function isShellRequest(requestUrl) {
   const url = new URL(requestUrl);
   if (url.origin !== self.location.origin) return false;
-  return /\.(?:js|css|svg|png|webmanifest|mp3)$/i.test(url.pathname) || url.pathname.endsWith('/constructora-gajardo/');
+  return /\.(?:js|css|svg|png|webmanifest|mp3)$/i.test(url.pathname) ||
+    url.pathname.endsWith('/constructora-gajardo/');
 }
 
 async function cacheFirst(request) {
@@ -51,21 +52,29 @@ async function cacheFirst(request) {
 
   const response = await fetch(request);
   if (response && response.ok) {
-    cache.put(request, response.clone()).catch(() => { });
+    await cache.put(request, response.clone()).catch(() => {});
   }
   return response;
 }
 
-async function staleWhileRevalidate(request) {
-  const cache = await caches.open(SHELL_CACHE);
-  const cached = await cache.match(request);
-  const networkPromise = fetch(request)
-    .then(response => {
-      if (response && response.ok) cache.put(request, response.clone()).catch(() => { });
-      return response;
-    })
-    .catch(() => null);
-  return cached || networkPromise || Response.error();
+function staleWhileRevalidate(request, event) {
+  const cachePromise = caches.open(SHELL_CACHE);
+  const networkUpdate = cachePromise.then(async cache => {
+    const response = await fetch(request);
+    if (response && response.ok) {
+      await cache.put(request, response.clone()).catch(() => {});
+    }
+    return response;
+  });
+
+  event.waitUntil(networkUpdate.then(() => undefined).catch(() => undefined));
+
+  return cachePromise.then(async cache => {
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    const network = await networkUpdate.catch(() => null);
+    return network || Response.error();
+  });
 }
 
 self.addEventListener('fetch', event => {
@@ -78,7 +87,7 @@ self.addEventListener('fetch', event => {
   }
 
   if (isShellRequest(request.url)) {
-    event.respondWith(staleWhileRevalidate(request));
+    event.respondWith(staleWhileRevalidate(request, event));
   }
 });
 
@@ -91,8 +100,13 @@ let cacheJob = null;
 
 async function cacheFrameList(urls) {
   const uniqueUrls = Array.from(new Set(urls)).filter(url => {
-    try { return new URL(url).origin === self.location.origin; } catch (_) { return false; }
+    try {
+      return new URL(url).origin === self.location.origin;
+    } catch (_) {
+      return false;
+    }
   });
+
   const total = uniqueUrls.length;
   let done = 0;
   let failed = 0;
@@ -103,6 +117,7 @@ async function cacheFrameList(urls) {
     while (queue.length) {
       const url = queue.shift();
       const request = new Request(url, { credentials: 'same-origin' });
+
       try {
         const exists = await cache.match(request);
         if (!exists) {
@@ -110,7 +125,7 @@ async function cacheFrameList(urls) {
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
           await cache.put(request, response.clone());
         }
-      } catch (error) {
+      } catch (_) {
         failed++;
       } finally {
         done++;
@@ -132,10 +147,15 @@ self.addEventListener('message', event => {
   if (!cacheJob) {
     cacheJob = cacheFrameList(data.urls)
       .catch(async error => {
-        await postToClients({ type: 'CACHE_ERROR', message: String(error && error.message || error) });
+        await postToClients({
+          type: 'CACHE_ERROR',
+          message: String(error && error.message || error)
+        });
       })
-      .finally(() => { cacheJob = null; });
+      .finally(() => {
+        cacheJob = null;
+      });
   }
 
-  if (event.waitUntil) event.waitUntil(cacheJob);
+  event.waitUntil(cacheJob);
 });
