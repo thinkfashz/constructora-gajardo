@@ -618,8 +618,7 @@ function initReel() {
     const nextWidth = Math.round(window.innerWidth);
     const nextHeight = Math.round(window.innerHeight);
     const widthChanged = Math.abs(nextWidth - layoutWidth) > 2;
-    const heightChanged = Math.abs(nextHeight - layoutHeight);
-    const significant = force || !coarsePointer || widthChanged || heightChanged >= MOBILE_VIEWPORT_DELTA;
+    const significant = force || !coarsePointer || widthChanged;
 
     if (!significant) return false;
 
