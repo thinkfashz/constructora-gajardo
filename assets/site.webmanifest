@@ -1,0 +1,27 @@
+{
+  "name": "Constructora Gajardo · Quinchos & Terrazas",
+  "short_name": "Gajardo",
+  "description": "Diseño y construcción de casas, terrazas mediterráneas, quinchos, piscinas y paisajismo. No pedimos anticipo. Desde 2007.",
+  "start_url": "/constructora-gajardo/",
+  "display": "standalone",
+  "background_color": "#14100A",
+  "theme_color": "#B4633A",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "android-chrome-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "android-chrome-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
