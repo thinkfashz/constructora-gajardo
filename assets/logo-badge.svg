@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
+    .bg   { fill: #B4633A; }
+    .mono { font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 66px; fill: #14100A; }
+  </style>
+  <rect x="6" y="6" width="116" height="116" rx="26" class="bg"/>
+  <rect x="6" y="6" width="116" height="116" rx="26" fill="none" stroke="#D8A763" stroke-width="3"/>
+  <text x="64" y="86" text-anchor="middle" class="mono">CG</text>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 320" width="1000" height="320">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap');
+    .kicker { font-family: 'Jost', 'Segoe UI', Arial, sans-serif; font-weight: 500; font-size: 44px; letter-spacing: 30px; fill: #D9C4A3; }
+    .name   { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-weight: 700; font-size: 152px; fill: #F4EDE1; letter-spacing: 8px; }
+    .rule   { stroke: #B4633A; stroke-width: 4; }
+    .sub    { font-family: 'Jost', 'Segoe UI', Arial, sans-serif; font-weight: 600; font-size: 40px; letter-spacing: 17px; fill: #B4633A; }
+    .since  { font-family: 'Jost', 'Segoe UI', Arial, sans-serif; font-weight: 500; font-size: 31px; letter-spacing: 11px; fill: #D8A763; }
+  </style>
+  <text x="500" y="86" text-anchor="middle" class="kicker">CONSTRUCTORA</text>
+  <text x="500" y="212" text-anchor="middle" class="name">GAJARDO</text>
+  <line x1="352" y1="248" x2="648" y2="248" class="rule"/>
+  <text x="500" y="274" text-anchor="middle" class="sub">QUINCHOS &amp; TERRAZAS</text>
+  <text x="500" y="312" text-anchor="middle" class="since">SINCE 2007</text>
+</svg>
