@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = 'v11';
+const VERSION = 'v12';
 const SHELL_CACHE = `cg-shell-${VERSION}`;
 const FRAME_CACHE = `cg-frames-${VERSION}`;
 const CACHE_PREFIX = 'cg-';
