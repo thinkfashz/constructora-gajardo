@@ -5,85 +5,84 @@
 
   const REFERENCE_IMAGES = {
     Quinchos: {
-      src: 'https://images.unsplash.com/photo-1762117360871-f11fbad00ee1?auto=format&fit=crop&w=1600&q=82',
-      srcset: 'https://images.unsplash.com/photo-1762117360871-f11fbad00ee1?auto=format&fit=crop&w=720&q=78 720w, https://images.unsplash.com/photo-1762117360871-f11fbad00ee1?auto=format&fit=crop&w=1200&q=80 1200w, https://images.unsplash.com/photo-1762117360871-f11fbad00ee1?auto=format&fit=crop&w=1800&q=82 1800w',
+      src: 'https://images.unsplash.com/photo-1762117360871-f11fbad00ee1?auto=format&fit=crop&w=2200&q=92',
+      srcset: 'https://images.unsplash.com/photo-1762117360871-f11fbad00ee1?auto=format&fit=crop&w=900&q=88 900w, https://images.unsplash.com/photo-1762117360871-f11fbad00ee1?auto=format&fit=crop&w=1500&q=90 1500w, https://images.unsplash.com/photo-1762117360871-f11fbad00ee1?auto=format&fit=crop&w=2200&q=92 2200w',
+      fallback: './assets/generated/terraza-mediterranea.jpg?v=20260804-hq',
       alt: 'Quincho exterior moderno con cocina, terraza y piscina, imagen referencial',
       caption: 'Quincho exterior · Imagen referencial',
       objectPosition: 'center 52%'
     },
     'Terrazas mediterráneas': {
-      base64Url: './assets/generated/terraza-mediterranea.jpg?v=20260804-2',
-      alt: 'Terraza mediterránea exterior con quincho, comedor y conexión al jardín, imagen referencial',
+      src: 'https://images.pexels.com/photos/5563466/pexels-photo-5563466.jpeg?auto=compress&cs=tinysrgb&w=2200&dpr=1',
+      srcset: 'https://images.pexels.com/photos/5563466/pexels-photo-5563466.jpeg?auto=compress&cs=tinysrgb&w=900&dpr=1 900w, https://images.pexels.com/photos/5563466/pexels-photo-5563466.jpeg?auto=compress&cs=tinysrgb&w=1500&dpr=1 1500w, https://images.pexels.com/photos/5563466/pexels-photo-5563466.jpeg?auto=compress&cs=tinysrgb&w=2200&dpr=1 2200w',
+      fallback: './assets/generated/terraza-mediterranea.jpg?v=20260804-hq',
+      alt: 'Terraza exterior moderna con mobiliario, piscina y conexión al jardín, imagen referencial',
       caption: 'Terraza mediterránea · Imagen referencial',
-      objectPosition: 'center 48%'
+      objectPosition: 'center 50%'
     },
     Piscinas: {
-      base64Url: './assets/generated/piscina-moderna.b64?v=20260804-2',
+      src: 'https://images.pexels.com/photos/28681443/pexels-photo-28681443/free-photo-of-modern-luxury-home-with-pool-and-patio.jpeg?auto=compress&cs=tinysrgb&w=2200&dpr=1',
+      srcset: 'https://images.pexels.com/photos/28681443/pexels-photo-28681443/free-photo-of-modern-luxury-home-with-pool-and-patio.jpeg?auto=compress&cs=tinysrgb&w=900&dpr=1 900w, https://images.pexels.com/photos/28681443/pexels-photo-28681443/free-photo-of-modern-luxury-home-with-pool-and-patio.jpeg?auto=compress&cs=tinysrgb&w=1500&dpr=1 1500w, https://images.pexels.com/photos/28681443/pexels-photo-28681443/free-photo-of-modern-luxury-home-with-pool-and-patio.jpeg?auto=compress&cs=tinysrgb&w=2200&dpr=1 2200w',
+      fallback: './assets/generated/piscina-moderna.jpg?v=20260804-hq',
       alt: 'Piscina residencial moderna integrada con terraza y paisajismo, imagen referencial',
       caption: 'Piscina integrada · Imagen referencial',
-      objectPosition: 'center 46%'
+      objectPosition: 'center 48%'
     },
     Paisajismo: {
-      base64Url: './assets/generated/paisajismo-mediterraneo.b64?v=20260804-2',
+      src: 'https://images.unsplash.com/photo-1761637822930-fb1c1a3df94d?auto=format&fit=crop&w=2200&q=92',
+      srcset: 'https://images.unsplash.com/photo-1761637822930-fb1c1a3df94d?auto=format&fit=crop&w=900&q=88 900w, https://images.unsplash.com/photo-1761637822930-fb1c1a3df94d?auto=format&fit=crop&w=1500&q=90 1500w, https://images.unsplash.com/photo-1761637822930-fb1c1a3df94d?auto=format&fit=crop&w=2200&q=92 2200w',
+      fallback: './assets/generated/paisajismo-mediterraneo.jpg?v=20260804-hq',
       alt: 'Paisajismo residencial mediterráneo con senderos, vegetación y terminaciones premium, imagen referencial',
       caption: 'Paisajismo residencial · Imagen referencial',
-      objectPosition: 'center 50%'
+      objectPosition: 'center 48%'
     }
   };
 
-  const dataUriCache = new Map();
+  function setImage(image, config) {
+    image.removeAttribute('srcset');
+    image.removeAttribute('sizes');
+    image.referrerPolicy = 'no-referrer';
+    image.loading = 'lazy';
+    image.decoding = 'async';
+    image.alt = config.alt;
+    image.style.objectPosition = config.objectPosition || 'center';
+    image.style.imageRendering = 'auto';
+    image.style.filter = 'none';
 
-  async function resolveImage(config) {
-    if (config.src) return config.src;
-    if (dataUriCache.has(config.base64Url)) return dataUriCache.get(config.base64Url);
+    let fallbackUsed = false;
+    image.onerror = () => {
+      if (fallbackUsed || !config.fallback) return;
+      fallbackUsed = true;
+      image.removeAttribute('srcset');
+      image.src = config.fallback;
+    };
 
-    const response = await fetch(config.base64Url, { cache: 'force-cache' });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const base64 = (await response.text()).trim();
-    const dataUri = `data:image/jpeg;base64,${base64}`;
-    dataUriCache.set(config.base64Url, dataUri);
-    return dataUri;
+    image.src = config.src;
+    if (config.srcset) {
+      image.srcset = config.srcset;
+      image.sizes = '(max-width: 760px) 94vw, (max-width: 1200px) 70vw, 48vw';
+    }
   }
 
-  async function applyReferenceImages() {
-    const blocks = Array.from(document.querySelectorAll('#servicios .svc'));
-
-    await Promise.all(blocks.map(async block => {
+  function applyReferenceImages() {
+    document.querySelectorAll('#servicios .svc').forEach(block => {
       const serviceName = block.querySelector('h3')?.textContent.trim();
       const config = REFERENCE_IMAGES[serviceName];
       if (!config) return;
 
       const image = block.querySelector('.card img');
-      if (!image) return;
-
-      try {
-        const src = await resolveImage(config);
-        image.removeAttribute('srcset');
-        image.removeAttribute('sizes');
-        image.src = src;
-        if (config.srcset) {
-          image.srcset = config.srcset;
-          image.sizes = '(max-width: 760px) 94vw, 48vw';
-        }
-        image.alt = config.alt;
-        image.loading = 'lazy';
-        image.decoding = 'async';
-        image.style.objectPosition = config.objectPosition || 'center';
-      } catch (error) {
-        console.warn(`No se pudo cargar la imagen de ${serviceName}:`, error);
-      }
+      if (image) setImage(image, config);
 
       const caption = block.querySelector('.card .cap');
       if (caption) caption.textContent = config.caption;
-    }));
+    });
   }
 
   function scheduleImageReplacement() {
     applyReferenceImages();
     requestAnimationFrame(applyReferenceImages);
-    setTimeout(applyReferenceImages, 400);
-    setTimeout(applyReferenceImages, 1300);
+    setTimeout(applyReferenceImages, 350);
+    setTimeout(applyReferenceImages, 1100);
   }
 
   const baseScript = document.createElement('script');
