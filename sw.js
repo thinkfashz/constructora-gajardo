@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = 'v10';
+const VERSION = 'v11';
 const SHELL_CACHE = `cg-shell-${VERSION}`;
 const FRAME_CACHE = `cg-frames-${VERSION}`;
 const CACHE_PREFIX = 'cg-';
@@ -58,24 +58,18 @@ async function cacheFirst(request) {
   return response;
 }
 
-function staleWhileRevalidate(request, event) {
-  const cachePromise = caches.open(SHELL_CACHE);
-  const networkUpdate = cachePromise.then(async cache => {
-    const response = await fetch(request);
+async function networkFirst(request) {
+  const cache = await caches.open(SHELL_CACHE);
+  try {
+    const response = await fetch(request, { cache: 'no-store' });
     if (response && response.ok) {
       await cache.put(request, response.clone()).catch(() => {});
     }
     return response;
-  });
-
-  event.waitUntil(networkUpdate.then(() => undefined).catch(() => undefined));
-
-  return cachePromise.then(async cache => {
+  } catch (_) {
     const cached = await cache.match(request);
-    if (cached) return cached;
-    const network = await networkUpdate.catch(() => null);
-    return network || Response.error();
-  });
+    return cached || Response.error();
+  }
 }
 
 self.addEventListener('fetch', event => {
@@ -88,7 +82,7 @@ self.addEventListener('fetch', event => {
   }
 
   if (isShellRequest(request.url)) {
-    event.respondWith(staleWhileRevalidate(request, event));
+    event.respondWith(networkFirst(request));
   }
 });
 
