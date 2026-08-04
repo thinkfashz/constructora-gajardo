@@ -3,15 +3,14 @@
 
 /* ================= CONFIGURACIÓN ================= */
 const FRAME_COUNT = 226;
-const INITIAL_FRAME_COUNT = 20;
+const INITIAL_FRAME_COUNT = 12;
 const FRAME_DIR = 'frame movil/';
 const FRAME_URL = index => `${FRAME_DIR}frame_${String(index + 1).padStart(4, '0')}.jpg`;
 const RETRIES = 3;
 const MAX_DECODE_CONCURRENCY = 4;
 const MEMORY_FRAME_LIMIT = 64;
-const PRELOADER_SAFE_MS = 12000;
-const PRELOADER_HARD_STOP_MS = 18000;
-const MOBILE_VIEWPORT_DELTA = 180;
+const PRELOADER_SAFE_MS = 8000;
+const PRELOADER_HARD_STOP_MS = 12000;
 const DESKTOP_VH_PER_FRAME = 7;
 const MOBILE_VH_PER_FRAME = 5.2;
 const UF_VALUE = 38000;
@@ -72,6 +71,69 @@ const state = {
 const canvas = $('#frames');
 const context = canvas ? canvas.getContext('2d', { alpha: false, desynchronized: true }) : null;
 
+/* ================= CONTRASTE DE PORTADA ================= */
+function injectHeroReadability() {
+  if ($('#hero-readability-fix')) return;
+
+  const style = document.createElement('style');
+  style.id = 'hero-readability-fix';
+  style.textContent = `
+    #stage .vig {
+      background:
+        radial-gradient(95% 72% at 50% 47%, rgba(9,6,4,.08) 0%, rgba(9,6,4,.22) 36%, rgba(9,6,4,.58) 100%),
+        linear-gradient(180deg, rgba(8,5,3,.72) 0%, rgba(8,5,3,.12) 26%, rgba(8,5,3,.16) 60%, rgba(8,5,3,.82) 100%) !important;
+    }
+    #hero::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: min(980px, 94vw);
+      height: min(610px, 82vh);
+      transform: translate(-50%, -50%);
+      border-radius: 46px;
+      background: radial-gradient(ellipse at center, rgba(12,8,5,.67) 0%, rgba(12,8,5,.45) 48%, rgba(12,8,5,.10) 78%, transparent 100%);
+      pointer-events: none;
+    }
+    #hero > * { position: relative; z-index: 1; }
+    #hero h1 {
+      color: #F7F0E6;
+      text-shadow: 0 2px 2px rgba(0,0,0,.96), 0 8px 28px rgba(0,0,0,.88), 0 18px 60px rgba(0,0,0,.72) !important;
+    }
+    #hero .serif-i {
+      color: #F4EDE1 !important;
+      text-shadow: 0 2px 2px rgba(0,0,0,.96), 0 8px 26px rgba(0,0,0,.86) !important;
+    }
+    #hero .tag {
+      color: #EFE2CF !important;
+      font-weight: 400;
+      text-shadow: 0 2px 2px rgba(0,0,0,.95), 0 8px 24px rgba(0,0,0,.92) !important;
+    }
+    #hero .eyebrow {
+      color: #FFD79D !important;
+      text-shadow: 0 2px 2px rgba(0,0,0,.95), 0 6px 18px rgba(0,0,0,.9) !important;
+    }
+    @media (max-width: 760px) {
+      #hero::before {
+        width: 96vw;
+        height: 78vh;
+        border-radius: 30px;
+        background: radial-gradient(ellipse at center, rgba(12,8,5,.76) 0%, rgba(12,8,5,.53) 52%, rgba(12,8,5,.14) 82%, transparent 100%);
+      }
+      #hero h1 {
+        font-size: clamp(38px, 12.8vw, 62px) !important;
+        line-height: 1.02;
+      }
+      #hero .tag {
+        max-width: 92vw;
+        font-size: 15px !important;
+        line-height: 1.55;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 /* ================= MENSAJES DE CARGA ================= */
 function initResourceNotice() {
   const preloader = $('#preloader');
@@ -82,7 +144,7 @@ function initResourceNotice() {
   if (preloader && !$('#resource-note')) {
     const note = document.createElement('p');
     note.id = 'resource-note';
-    note.textContent = 'La primera visita descargará recursos visuales. Entrarás cuando estén listas las primeras 20 imágenes; el resto se guardará temporalmente en la caché del navegador para reproducirse con mayor fluidez.';
+    note.textContent = 'La primera visita descargará recursos visuales. Entrarás cuando estén listas las primeras 12 imágenes; el resto se guardará temporalmente en la caché del navegador para reproducirse con mayor fluidez.';
     Object.assign(note.style, {
       width: 'min(520px, 84vw)',
       margin: '0',
@@ -460,8 +522,11 @@ function requestFrameWindow(center, direction = 1) {
 
 async function preloadInitialFrames() {
   updateInitialProgress();
-  const pending = Array.from({ length: INITIAL_FRAME_COUNT }, (_, index) => index);
 
+  await loadFrame(0, RETRIES, true);
+  scheduleDraw(0);
+
+  const pending = Array.from({ length: INITIAL_FRAME_COUNT - 1 }, (_, index) => index + 1);
   const worker = async () => {
     while (pending.length) {
       const index = pending.shift();
@@ -568,7 +633,7 @@ function initPreloader(registrationPromise) {
       } else {
         setTimeout(startCache, 700);
       }
-    }, 850);
+    }, 650);
   };
 
   const tick = now => {
@@ -702,7 +767,7 @@ function initReel() {
         duration: 1.4,
         stagger: 0.16,
         ease: 'power3.out',
-        delay: 0.4,
+        delay: 0.25,
         scrollTrigger: { trigger: reel, start: 'top top', end: '+=40%', toggleActions: 'play none none none' }
       }
     );
@@ -794,7 +859,7 @@ function initParticles() {
   const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
   camera.position.z = 9;
 
-  const count = coarsePointer ? 36 : 90;
+  const count = coarsePointer ? 30 : 90;
   const positions = new Float32Array(count * 3);
   const speeds = new Float32Array(count);
 
@@ -830,7 +895,7 @@ function initParticles() {
   let previous = 0;
   const loop = now => {
     requestAnimationFrame(loop);
-    if (document.hidden || now - previous < (coarsePointer ? 34 : 17)) return;
+    if (document.hidden || now - previous < (coarsePointer ? 40 : 17)) return;
     previous = now;
 
     const attribute = geometry.attributes.position;
@@ -860,7 +925,7 @@ function initFx() {
   let gradient = null;
 
   const resize = () => {
-    const scale = coarsePointer ? 0.72 : 1;
+    const scale = coarsePointer ? 0.68 : 1;
     width = fxCanvas.width = Math.max(1, Math.round(window.innerWidth * scale));
     height = fxCanvas.height = Math.max(1, Math.round(window.innerHeight * scale));
     gradient = fxContext.createRadialGradient(
@@ -1140,6 +1205,7 @@ function initConsent(music) {
 
 /* ================= ARRANQUE ================= */
 function boot() {
+  injectHeroReadability();
   initResourceNotice();
   sizeCanvas(true);
 
