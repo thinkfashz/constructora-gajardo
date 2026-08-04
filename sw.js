@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = 'v5';
+const VERSION = 'v6';
 const SHELL_CACHE = `cg-shell-${VERSION}`;
 const FRAME_CACHE = `cg-frames-${VERSION}`;
 const CACHE_PREFIX = 'cg-';
@@ -8,6 +8,7 @@ const SHELL_ASSETS = [
   './',
   './index.html',
   './app.js',
+  './app-core.js',
   './assets/logo.svg',
   './assets/favicon.svg',
   './assets/site.webmanifest'
