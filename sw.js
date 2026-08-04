@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = 'v8';
+const VERSION = 'v9';
 const SHELL_CACHE = `cg-shell-${VERSION}`;
 const FRAME_CACHE = `cg-frames-${VERSION}`;
 const CACHE_PREFIX = 'cg-';
@@ -11,7 +11,10 @@ const SHELL_ASSETS = [
   './app-core.js',
   './assets/logo.svg',
   './assets/favicon.svg',
-  './assets/site.webmanifest'
+  './assets/site.webmanifest',
+  './assets/generated/terraza-mediterranea.jpg',
+  './assets/generated/piscina-moderna.b64',
+  './assets/generated/paisajismo-mediterraneo.b64'
 ];
 
 self.addEventListener('install', event => {
@@ -42,7 +45,7 @@ function isFrameRequest(requestUrl) {
 function isShellRequest(requestUrl) {
   const url = new URL(requestUrl);
   if (url.origin !== self.location.origin) return false;
-  return /\.(?:js|css|svg|png|webmanifest|mp3)$/i.test(url.pathname) ||
+  return /\.(?:js|css|svg|png|jpg|b64|webmanifest|mp3)$/i.test(url.pathname) ||
     url.pathname.endsWith('/constructora-gajardo/');
 }
 
